@@ -16,7 +16,7 @@ from django.urls import reverse
 
 from helpdesk import settings as helpdesk_settings
 from helpdesk import user
-from helpdesk.models import KBCategory, KBItem, KBIAttachment
+from helpdesk.models import KBCategory, KBItem, KBIAttachment, Notification
 from helpdesk.decorators import is_helpdesk_staff, helpdesk_staff_member_required
 from helpdesk.forms import EditKBCategoryForm, EditKBItemForm
 
@@ -25,10 +25,20 @@ import datetime
 
 def index(request):
     huser = user.huser_from_request(request)
+    if is_helpdesk_staff(request.user):
+        announcements = Notification.objects.filter(
+            organization=request.user.default_organization.helpdesk_organization,
+            announcement=True,
+            is_read=False
+        ).order_by('-created')
+    else:
+        org = request.GET.get('org')
+        announcements = Notification.objects.filter(organization__name=org, announcement=True, is_read=False).order_by('-created')
     # TODO: It'd be great to have a list of most popular items here.
     return render(request, 'helpdesk/kb_index.html', {
         'kb_categories': huser.get_allowed_kb_categories(),
         'helpdesk_settings': helpdesk_settings,
+        'unread_announcements': announcements,
         'debug': settings.DEBUG,
     })
 

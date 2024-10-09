@@ -441,4 +441,30 @@ urlpatterns += [
     url(r'^system_settings/maintain_forms/copy_field/',
         staff.copy_field,
         name="copy_field"),
+
+    url(r'^notifications/$',
+        staff.CreateNotificationView.as_view(),
+        name="notifications"),
+
+    url(r'^notifications/(?P<notification_id>[0-9]+)/$',
+        staff.mark_notification_as_read,
+        name="mark_notification_as_read"),
+    
+    url(r'^notifications/json/$',
+        staff.notifications_json,
+        name="notifications_json"),
+    
+    url(r'^create_announcement/$',
+        staff.CreateAnnouncementView.as_view(),
+        name="create_announcement"),
+    
+    url(r'^mark_announcement_as_read/(?P<notification_id>[0-9]+)/$',
+        staff.mark_announcement_as_read,
+        name="mark_announcement_as_read"),
+    
+     url(r'^run_actions/$',
+        staff.run_actions,
+        name="run_actions"),
+    
+
 ]

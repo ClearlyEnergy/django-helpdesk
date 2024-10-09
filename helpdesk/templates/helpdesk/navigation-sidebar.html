@@ -4,6 +4,7 @@
 {% load saved_queries %}
 {% with user|saved_queries as user_saved_queries_ %}
 {% with request.resolver_match.url_name as url_name %}
+{% load get_unread_notifications %}
     <!-- Sidebar -->
     <ul class="sidebar navbar-nav">
     {% if helpdesk_settings.HELPDESK_NAVIGATION_ENABLED and user.is_authenticated or user|is_helpdesk_staff %}
@@ -65,6 +66,20 @@
           </a>
         </li>
         {% endif %}
+        {% if user|is_helpdesk_staff %}
+        <li class="nav-item {% if url_name == 'notifications' %}active{% endif %}">
+          <a class="nav-link notification-indicator" href="{% url 'helpdesk:notifications' %}">
+            {% with user|get_unread_notifications:user.default_organization.helpdesk_organization as unread_notifications %}
+              {% if unread_notifications %}
+                <span class="indicator"></span>
+              {% endif %}
+            {% endwith %}
+            <i class="fas fa-fw fa-bell"></i>
+            <span>{% trans "Notifications" %}</span>
+          </a>
+        </li>
+        {% endif %}
+
         {% if user_info.default_org.name == 'Building Performance Colorado' %}
         <li class="nav-item">
           <a class="nav-link" href="https://energyoffice.colorado.gov/accessibility"  target="_blank">

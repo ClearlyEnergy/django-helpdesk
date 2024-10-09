@@ -18,8 +18,20 @@
 {% if from_saved_query %} [{{ saved_query.title }}]{% endif %}
 {% endblock %}
 
+{% block announcements %}
+{% for announcement in unread_announcements %}
+<div class="alert alert-primary alert-dismissible fade show" role="alert">
+    {{announcement.message}}
+    <button type="button" class="close checkmarkbutton" data-id="{{announcement.id}}" data-dismiss="alert" aria-label="Close" title= "Mark as read" data-action="mark-read">
+        <span aria-hidden="true"><i class="fas fa-check">{% csrf_token %}</i></span>
+    </button>
+  </div>
+{% endfor %}
+
+{% endblock %}
 
 {% block helpdesk_breadcrumb %}
+
 <li class="breadcrumb-item">
     <a href="{% url 'helpdesk:list' %}">{% trans "Tickets" %}</a>
 </li>
@@ -504,7 +516,26 @@
                 paginatedQuery()
             }
         })
+
+       
     })
+
+    $(".checkmarkbutton").on('click', function() {
+        announcementId = $(this).data('id');
+
+        $.ajax({
+            url: "{% url 'helpdesk:mark_announcement_as_read' 0 %}".replace('0', announcementId),
+            type: "POST",
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+            },
+            success: function() {
+                console.log("completed");
+            }
+
+            
+        });
+    });
 
     colNums = {"id": 0};
     idx = 1;
@@ -687,6 +718,7 @@
     }
     checkInputs();
     checkCheckboxes();
+
 
     $(document).on("change", ".form-control", function() {
         checkInputs();

@@ -1,0 +1,59 @@
+{% extends "helpdesk/base.html" %}
+
+{% load i18n helpdesk_staff %}
+
+{% block helpdesk_title %} {% trans "Create Announcement" %} {% endblock %}
+
+{% block helpdesk_breadcrumb %}
+<li class="breadcrumb-item">
+    <a href="{% url 'helpdesk:notifications' %}">{% trans "Notifications" %}</a>
+</li>
+<li class="breadcrumb-item active">Create Announcement</li>
+{% endblock %}
+
+{% block helpdesk_body %}
+<div class="container">
+    <div class="card card-register mx-auto mt-5">
+        <div class="card-header">
+            {% trans "Create Announcement" %}
+        </div>
+
+        <div class="card-body" style="margin-top:-15px">
+            <form method="POST" id="announcement_form">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-group" id='id_group_{{ field.name }}'>
+                        <label for='id_{{ field.name }}'>
+                            {{ field.label }}{% if field.field.required %}<span style="color:red;">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <small class='error'>{{ field.errors }}</small>
+                        {% endif %}
+                        {% if field.help_text %}
+                            <small class='form_help_text help-block'>
+                                {{ field.help_text|safe }}
+                            </small>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary btn-lg btn-block">
+                    <i class="fa fa-send"></i> {% trans "Create Announcement" %}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% include 'helpdesk/include/edit_md_preview_script.html' %}
+
+
+{% endblock %}
+
+{% block helpdesk_js %}
+
+<script>
+    datefield.min = new Date().toISOString().split("T")[0];
+</script>
+
+{% endblock %}

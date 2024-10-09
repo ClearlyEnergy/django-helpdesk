@@ -22,7 +22,7 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 
 from helpdesk.lib import safe_template_context, process_attachments
-from helpdesk.models import (Ticket, Queue, FollowUp, IgnoreEmail, TicketCC,
+from helpdesk.models import (Ticket, Queue, FollowUp, IgnoreEmail, TicketCC, Notification,
                              CustomField, TicketDependency, UserSettings, KBItem, Tag,
                              FormType, KBCategory, KBIAttachment, is_extra_data, PreSetReply, EmailTemplate, clean_html)
 from helpdesk import settings as helpdesk_settings
@@ -162,7 +162,6 @@ class CustomFieldMixin(object):
 
 class PreviewWidget(forms.widgets.Textarea):
     template_name = "helpdesk/include/edit_md_preview.html"
-
 
 class EditTicketForm(CustomFieldMixin, forms.ModelForm):
 
@@ -1365,3 +1364,16 @@ class MultipleTicketSelectForm(forms.Form):
         if len(queues) != 1:
             raise ValidationError(_('All selected tickets must share the same queue in order to be merged.'))
         return tickets
+    
+class AnnouncementForm(forms.ModelForm):
+    class Meta:
+        model = Notification
+        exclude = ['user', 'ticket', 'organization', 'is_read', 'created', 'announcement']
+        widgets = {
+            'message': forms.Textarea(attrs={'class': 'form-control'}),
+            'delete_by': forms.DateInput(attrs={'id': 'datefield', 'class': 'form-control', 'type': 'datetime-local'})
+        }
+        help_texts = {
+            'message': 'Message to be displayed'
+    }
+

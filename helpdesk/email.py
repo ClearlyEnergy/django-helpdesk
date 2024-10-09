@@ -41,7 +41,7 @@ from exchangelib.errors import ErrorInternalServerError
 
 from helpdesk import settings
 from helpdesk.lib import safe_template_context, process_attachments
-from helpdesk.models import Ticket, TicketCC, FollowUp, IgnoreEmail, FormType, CustomField, is_extra_data
+from helpdesk.models import Ticket, TicketCC, FollowUp, IgnoreEmail, FormType, CustomField, is_extra_data, Notification
 from seed.models import EmailImporter, GOOGLE, MICROSOFT, EXCHANGE_OAUTH, EXCHANGE_PASS
 from helpdesk.decorators import is_helpdesk_staff
 from post_office.models import Email
@@ -854,6 +854,30 @@ def create_ticket_from_processed_message(message, ticket_id, payload, files, log
                 email_logger=logger,
                 source="import"
             )
+        for ticketcc in ticket.ticketcc_set.all():
+            if is_helpdesk_staff(ticketcc.user, ticket.ticket_form.organization_id) and ticketcc.user.usersettings_helpdesk.enable_notifications:
+                new_notification = Notification(
+                    user=ticketcc.user,
+                    ticket=ticket,
+                    organization=ticket.ticket_form.organization,
+                    message= "A ticket you have been CC'd on has been updated",
+                    is_read=False,
+                    delete_by = timezone.now() + timedelta(days=60)
+                )
+
+                new_notification.save()
+
+        if ticket.assigned_to and ticket.assigned_to.user.usersettings_helpdesk.enable_notifications:
+            new_notification = Notification(
+                user=ticket.assigned_to,
+                ticket=ticket,
+                organization=ticket.ticket_form.organization,
+                message=message,
+                is_read=False,
+                delete_by = timezone.now() + timedelta(days=60)
+            )
+
+            new_notification.save()
     return ticket
 
 def process_message(message, importer, queues, logger, options=None):

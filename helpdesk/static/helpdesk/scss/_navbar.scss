@@ -131,3 +131,19 @@
 .navbar {
     height: $navbar-base-height;
 }
+
+.notification-indicator {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-indicator .indicator {
+  position: absolute;
+  top: 24px;
+  right: 80px;
+  height: 10px;
+  width: 10px;
+  background-color: red;
+  border-radius: 50%;
+  content: '';
+}

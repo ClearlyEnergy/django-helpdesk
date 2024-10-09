@@ -1,0 +1,337 @@
+{% extends "helpdesk/base.html" %}
+
+{% load i18n humanize static in_list %}
+
+{% block helpdesk_title %} {% trans "Notifications" %} {% endblock %}
+
+{% block helpdesk_breadcrumb %}
+<li class="breadcrumb-item">
+    <a href="{% url 'helpdesk:notifications' %}">{% trans "Notifications" %}</a>
+</li>
+<li class="breadcrumb-item active">Overview</li>
+{% endblock %}
+
+{% block helpdesk_body %}
+<div class="d-flex align-items-center">    
+    
+    <div class="input-group justify-content-start">
+        <a href="{% url 'helpdesk:create_announcement' %}"><button id="announcements_btn" class="btn btn-outline-primary rounded-left font-weight-semibold ml-2" type="button">Create Announcement<i class="fa fa-plus ml-2"></i></button></a>
+        <div class="input-group-prepend">
+            <label class="input-group-text bg-white border-0">Select:</label>
+        </div>
+        
+        <div class="input-group-append">
+            <button id="select_all_btn" class="btn btn-outline-primary rounded-left font-weight-semibold" type="button">All <i class="fa fa-plus-circle mr-1"></i></button>
+            <button id="select_none_btn" class="btn btn-outline-danger font-weight-semibold" type="button">None <i class="fa fa-times-circle mr-1"></i></button>
+        </div>
+    </div>
+    
+    <div class="d-flex align-items-center mr-2" style="width: 500px">
+        <form method="post" action="{% url 'helpdesk:run_actions' %}" id="notification_run_actions">
+            {% csrf_token %} 
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <label class="input-group-text bg-white border-0">Action:</label>
+                </div>
+                <select class="custom-select rounded-left" name="action" id="tableActions" disabled>
+                    <option selected>Choose...</option>
+                    <option value="mark-read">Mark As Read</option>
+                    <option value="mark-unread">Mark As Unread</option>
+                    <option value="delete">Delete Selected</option>
+                </select>
+                <div class="input-group-append">
+                    <button id="runActionButton" type="button" onclick="runActions()" class="btn btn-outline-secondary" disabled> Run Action <i class="fa fa-arrow-circle-right mr-1"></i></button>
+                </div>
+                
+            </div>
+        </form>
+    </div>
+    
+</div>
+
+<div class="row">
+    <div class="col-sm-8 col-md-9 col-lg-12 order-1 pt-2">
+        <div id="query_card" class="card mb-2">
+            <!-- Notifications-->
+            <div class="card-header">
+                <i class="fas fa-bell"></i>
+                {% trans "Notifications" %}
+            </div>
+
+            <div id="filterContainer" class="mb-3 d-flex justify-content-end">
+                <!-- Dropdown filters will be appended here -->
+                <span id="filterQueue"></span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm m-0" id="dataTable" width="100%" cellspacing="0">
+                        <thead class="thead-light">
+                            <tr id="headers">
+                                <th class="filter-top" data-colname="checkbox" scope="col"></th>
+                                <th class="filter-top" data-colname="queue" scope="col">Queue</th>
+                                <th class="filter-top" data-colname="ticket_link" scope="col">Ticket</th>
+                                <th class="filter-top" data-colname="message" scope="col">Message</th>
+                                <th class="filter-top" data-colname="date" scope="col">Date</th>
+                                <th></th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                        <footer></footer>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block helpdesk_js %}
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap4.min.js"></script>
+<script src="//cdn.datatables.net/plug-ins/2.1.2/dataRender/ellipsis.js"></script>
+
+<script>
+    var selected = [];
+    var hiddenRowsData = [];
+    var all_notification_ids = [];
+    var filterContainer = $('#filterContainer');
+
+    $(document).ready(function() {
+
+
+        // Go to the url that marks a notification as read
+        var baseUrl = "{% url 'helpdesk:mark_notification_as_read' 0%}"
+        // Data table
+        var dataTable = $('#dataTable').DataTable({
+            // Gets all the data that the data table needs
+            "ajax": {
+                "url": "{% url 'helpdesk:notifications_json' %}",
+                "dataSrc": "data",
+            
+            },
+
+            "columnDefs": [
+                {
+                    "searchable": false,
+                    "targets": 0
+                },
+
+                {
+                    "visible": false,
+                    "targets": [5]
+                },
+
+                {
+                    "targets": [3],
+                    "render": $.fn.dataTable.render.ellipsis(85)  // Apply ellipsis render
+                }
+		    ],
+            // Setting the data for all of the columns
+            "columns": [
+                // Checkboxes
+                {    
+                    // Grabs the 'id' key from the dictionary returned from the view
+                    "data": "id",
+                    "render": function(data, type, row) {
+                        return `<div class="custom-control custom-checkbox">
+                                    <input type="checkbox" name="notification_checkbox" class="custom-control-input notification_multi_select" id="newCustomCheck${data}" value="${data}">
+                                    <label class="custom-control-label" for="newCustomCheck${data}"></label>
+                                </div>`;
+                    }
+                },
+
+                {"data": "ticket_queue"},
+
+                // Displays queue and title of ticket. Marks notification as read if link is clicked
+                {
+                    "data": null,
+                    "render": function(data, type, row) {
+                        if (row.ticket_id === null) {
+                            return '';
+                        } else {
+                            var baseUrl = "{% url 'helpdesk:mark_notification_as_read' 0 %}".replace('0', row.id);
+                            return `<a href="${baseUrl}">${row.ticket_id}. ${$.fn.dataTable.render.ellipsis(40, true)(row.ticket_title, type, row)}</a>`;
+                        }
+                    }
+                },
+                // Displays message
+                {
+                    "data": "message",
+                }, 
+                // Displays the date
+                {
+                    "data": "date", 
+                    "render": function(data, type, row) {
+                        var date = new Date(data);
+                        var created = new Date(row.created)
+                        var formattedDate = isNaN(date.getTime()) ? data : date.toLocaleString();
+                        var originalDate = created.toLocaleString();
+                        
+                        return `<span title = "${originalDate}">${formattedDate}</span>`;
+                    }
+                },
+                {"data": "is_read"}
+
+            ], 
+
+            // Ordering by notification id
+            "order" : [[0, 'desc']],
+            // Sets color of read notifications to gray
+            "createdRow": function(row, data, dataIndex) {
+                if (data.is_read) {
+                    $(row).addClass("bg-light")
+                    $(row).addClass("text-muted")
+                } 
+            },
+
+            "initComplete": function() {
+                this.api().columns().every(function (index) {
+                    // Adds all queues to the dropdown menu.
+                    if (index === 1) {
+                        let column = this
+
+                        let select = document.createElement('select');
+                        select.add(new Option(''));
+
+                        select.classList.add('ml-3')
+
+                        $(select).appendTo(filterContainer)
+
+                        select.addEventListener('change', function () {
+                            column
+                                .search(select.value, {exact: true})
+                                .draw();
+                        });
+
+                        
+
+                        column
+                            .data()
+                            .unique()
+                            .sort()
+                            .each(function (d, j) {
+                                select.add(new Option(d));
+                            });
+                    
+                        $('#filterQueue').text('Filter by Queue:')
+                    // Adds logic for filtering by read/unread notifications
+                    } else if (index === 5) {
+                        let column = this
+
+                        let select = document.createElement('select');
+                        select.add(new Option(''));
+
+                        select.classList.add('ml-3')
+
+                        $('<span id="filterRead" class="ml-2">Filter Read/Unread Notifications:</span>').appendTo(filterContainer);
+
+                        $(select).appendTo(filterContainer)
+
+                        select.addEventListener('change', function () {
+                            if (select.value === "Read") {
+                                column
+                                .search(true)
+                                .draw();
+                            } else if (select.value === "Unread") {
+                                column
+                                .search(false)
+                                .draw(); 
+                            } else {
+                                column
+                                .search(select.value, {exact: true})
+                                .draw(); 
+                            }
+                        });
+
+                        column
+                            .data()
+                            .unique()
+                            .sort()
+                            .each(function (d, j) {
+                                if (d) {
+                                    select.add(new Option("Read"));
+                                } else {
+                                    select.add(new Option("Unread"));
+                                }
+                                
+                        });
+                    }
+                })
+                
+            }
+        });
+
+        $("#select_all_btn").click(function () {
+            $(".notification_multi_select").prop('checked', true);
+
+            for (const id of document.querySelectorAll(".notification_multi_select")) {
+                    all_notification_ids.push(id.value)
+                };
+            
+            all_notification_ids.forEach(function(e) {
+                if (!selected.includes(String(e))) {
+                    selected.push(String(e));
+                }
+            })
+
+            $("#tableActions").attr("disabled", false)
+            $("#runActionButton").attr("disabled", false)
+            
+        });
+
+        $("#select_none_btn").click(function () {
+            $(".notification_multi_select").prop('checked', false);
+            selected = [];
+            all_notification_ids = []
+
+            $("#tableActions").attr("disabled", true)
+            $("#runActionButton").attr("disabled", true)
+            
+        });
+    
+        // When checkboxes are clicked, add/remove from selected list
+        $('#dataTable tbody').on('click', '.notification_multi_select', function() {
+            if ($(this).prop('checked')) {
+                if (!selected.includes($(this).val())) {
+                    selected.push($(this).val())
+                }
+            } else {
+                if (selected.includes($(this).val())) {
+                    selected.pop($(this).val())
+                } 
+            }
+
+            // Setting Action options and button to disabled if no table elements are selected
+            if (selected.length > 0) {
+                $("#tableActions").attr("disabled", false)
+                $("#runActionButton").attr("disabled", false)
+            } else {
+                $("#tableActions").attr("disabled", true)
+                $("#runActionButton").attr("disabled", true)
+            }
+
+        })
+        
+    });
+
+    function runActions() {
+        $.ajax({
+            url: "{% url 'helpdesk:run_actions' %}",
+            type: 'POST',
+            data: { 
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                'selected[]': selected,
+                'action': document.getElementById('tableActions').value
+            },
+            success: function(response) {
+                location.reload();
+            }
+        })
+    }
+    
+</script>
+
+{% endblock %}

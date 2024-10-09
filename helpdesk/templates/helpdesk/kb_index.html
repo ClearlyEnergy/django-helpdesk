@@ -8,6 +8,17 @@
 <li class="breadcrumb-item active">{% trans "Overview" %}</li>
 {% endblock %}
 
+{% block announcements %}
+{% for announcement in unread_announcements %}
+<div class="alert alert-primary alert-dismissible fade show" role="alert">
+    {{announcement.message}}
+    <button type="button" class="close checkmarkbutton" data-id="{{announcement.id}}" data-dismiss="alert" aria-label="Close" title= "Mark as read" data-action="mark-read">
+        <span aria-hidden="true"><i class="fas fa-check">{% csrf_token %}</i></span>
+    </button>
+  </div>
+{% endfor %}
+{% endblock %}
+
 {% block helpdesk_body %}
 
 {% if helpdesk_settings.HELPDESK_VIEW_A_TICKET_PUBLIC and not user.is_authenticated and not user|is_helpdesk_staff %}

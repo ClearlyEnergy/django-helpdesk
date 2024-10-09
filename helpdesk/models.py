@@ -21,6 +21,7 @@ import re
 import os
 import mimetypes
 import datetime
+from datetime import timedelta
 import logging
 
 from django.utils.safestring import mark_safe
@@ -679,7 +680,7 @@ class Ticket(models.Model):
 
                 for field in email_fields:
                     if field in self.extra_data and self.extra_data[field] is not None and self.extra_data[field] != '' and is_extra_data(field):
-                        send('extra', self.extra_data[field])
+                        send('extra', self.extra_data[field])            
 
         return recipients
 
@@ -1852,6 +1853,12 @@ class UserSettings(models.Model):
         default=use_email_as_submitter_default,
     )
 
+    enable_notifications = models.BooleanField(
+        verbose_name=('Enable notification when tickets are created or updated?'),
+        help_text='Get notifications when tickets you\'ve been assigned to or CC\'d on are updated?',
+        default=True,
+    )
+
     def __str__(self):
         return 'Preferences for %s' % self.user
 
@@ -2254,3 +2261,56 @@ class TicketDependency(models.Model):
 
     def __str__(self):
         return '%s / %s' % (self.ticket, self.depends_on)
+
+class Notification(models.Model):
+    user = models.ForeignKey(
+            settings.AUTH_USER_MODEL,
+            on_delete=models.SET_NULL,
+            blank=True,
+            null=True,
+            verbose_name=_('User'),
+    )
+
+    ticket = models.ForeignKey(
+        Ticket,
+        on_delete=models.CASCADE,
+        verbose_name=_('Ticket'),
+        blank=True,
+        null=True
+    )
+
+    organization = models.ForeignKey(
+        Organization, 
+        on_delete=models.CASCADE
+    )
+
+    message = models.TextField()
+
+    is_read = models.BooleanField()
+
+    created = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    delete_by = models.DateTimeField()
+
+    announcement = models.BooleanField(default=False)
+
+    def get_time_since_created(self):
+
+        time_diff = timezone.now() - self.created
+
+        days = time_diff.days
+        seconds = time_diff.seconds
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+
+        if days > 0:
+            return self.created
+        elif hours > 0:
+            return f"{hours} hour(s) ago"
+        elif minutes > 0:
+            return f"{minutes} minute(s) ago"
+        else:
+            return "just now"
+    

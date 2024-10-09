@@ -233,11 +233,11 @@ body.fixed-nav.sidebar-toggled #content-wrapper {
   vertical-align: 0;
   border: 0;
   font-weight: 900;
-  content: '\f105';
-  font-family: 'Font Awesome 5 Free';
+  content: "\f105";
+  font-family: "Font Awesome 5 Free";
 }
 .navbar-nav .nav-item.dropdown.show .dropdown-toggle::after {
-  content: '\f107';
+  content: "\f107";
 }
 .navbar-nav .nav-item.dropdown.no-arrow .dropdown-toggle::after {
   display: none;
@@ -366,8 +366,20 @@ body.fixed-nav.sidebar-toggled #content-wrapper {
   height: 86px;
 }
 
-.navbar {
-  height: 86px;
+.notification-indicator {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-indicator .indicator {
+  position: absolute;
+  top: 24px;
+  right: 80px;
+  height: 10px;
+  width: 10px;
+  background-color: red;
+  border-radius: 50%;
+  content: "";
 }
 
 .card-body-icon {
@@ -467,7 +479,7 @@ body.fixed-nav.sidebar-toggled #content-wrapper {
 }
 
 .form-label-group input:not(:placeholder-shown) {
-  padding-top: calc(var(--input-padding-y) + var(--input-padding-y) * (2 / 3));
+  padding-top: calc(var(--input-padding-y) + var(--input-padding-y) * 0.6666666667);
   padding-bottom: calc(var(--input-padding-y) / 3);
 }
 
