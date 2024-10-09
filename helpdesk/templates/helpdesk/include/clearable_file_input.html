@@ -15,7 +15,11 @@
 
     $('#id_{{widget.name}}').on('change', function() {
         src_input = document.getElementById('id_{{widget.name}}');
-        $('#{{ widget.name }}_text').val(src_input.files[0].name);
+        filenames = src_input.files[0].name
+        if (src_input.files.length > 1) {
+            filenames += ` ( + ${src_input.files.length - 1} files)`
+        }
+        $('#{{ widget.name }}_text').val(filenames);
         $('#{{ widget.name }}_interact').toggle();
     });
 

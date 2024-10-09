@@ -274,6 +274,8 @@ $(document).ready(function() {
                 alert("File size exceeds " + {{ helpdesk_settings.HELPDESK_MAX_EMAIL_ATTACHMENT_SIZE }}/1000 + "kB. The file will be uploaded to the ticket, but will not be emailed out.");
             }
             $("#selectedfilename"+browseButtonNum).html(label);
+            $(`<button type="button" title="Remove file" class='btn btn-danger btn-sm ml-2' onClick="deleteFile(${browseButtonNum})"><i class="fa fa-trash"></i></button>
+                `).insertAfter("#selectedfilename"+browseButtonNum);
         };
     });
 
@@ -284,7 +286,13 @@ $(document).ready(function() {
     $(add_button).click(function(e){ //on add input button click
         x++;
         e.preventDefault();
-
+        $(`<div id="file_group${x}">
+            <label class='btn btn-primary btn-sm btn-file'>
+                Browse... 
+                <input type='file' name='attachment' id='file${x}' multiple style='display: none;'/>
+            </label>
+            <span>&nbsp;</span><span id='selectedfilename${x}'>{% trans 'No files selected.' %}</span>
+        </div>`).insertBefore(add_button); //add input box
     });
 
 });
@@ -301,5 +309,14 @@ $(document).on('change', ':file', function() {
     input.trigger('fileselect', [numFiles, label, inputWidgetNum, files]);
 });
 
+function deleteFile(index) {
+    if (index > 0) {
+        $(`#file_group${index}`).remove();
+    } else {
+        $(`#file${index}`).val('');
+        $(`#selectedfilename${index}`).html("{% trans 'No files selected.' %}");
+        $(`#selectedfilename${index}`).next('button').remove(); // removes the delete button
+    }
+}
 </script>
 {% endblock %}
