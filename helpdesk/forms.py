@@ -523,6 +523,14 @@ class EditQueueForm(forms.ModelForm):
         if 'slug' in cleaned_data and Queue.objects.filter(organization=self.org, slug=cleaned_data['slug']).exists():
             raise ValidationError({'slug': ["Queue with this slug already exists in this organization"]})
 
+        if 'agg_match_on' in cleaned_data:
+            cleaned_data['match_on'] = [i for i in cleaned_data['agg_match_on'] if i]
+            del cleaned_data['agg_match_on']
+
+        if 'agg_match_on_addresses' in cleaned_data:
+            cleaned_data['match_on_addresses'] = [i for i in cleaned_data['agg_match_on_addresses'] if i]
+            del cleaned_data['agg_match_on_addresses']
+
         return cleaned_data
 
 
@@ -560,9 +568,24 @@ class EditFormTypeForm(forms.ModelForm):
                     if before == after:  # or CustomField.objects.filter(field_name=cleaned_data['field_name'], ticket_form=self.ticket_form).exists():
                         raise ValidationError(["Custom Field with name \"" + cleaned_data['field_name'] + "\" already exists for this form."])
 
-    CustomFieldFormSet = forms.inlineformset_factory(FormType, CustomField, formset=BaseCustomFieldFormSet,
-        exclude=['choices_as_array', 'ticket_form', 'created', 'modified', 'objects', 'view_ordering'],
-        widgets={'help_text': PreviewWidget}
+    class CustomFieldForm(forms.ModelForm):
+        agg_list_values = forms.JSONField(widget=forms.HiddenInput(), required=False)
+
+        class Meta:
+            model = CustomField
+            exclude = ['choices_as_array', 'ticket_form', 'created', 'modified', 'objects', 'view_ordering']
+
+        def clean(self):
+            cleaned_data = super().clean()
+
+            if 'agg_list_values' in cleaned_data:
+                cleaned_data['list_values'] = [i for i in cleaned_data['agg_list_values'] if i]
+                del cleaned_data['agg_list_values']
+
+            return cleaned_data
+
+    CustomFieldFormSet = forms.inlineformset_factory(FormType, CustomField, form=CustomFieldForm, formset=BaseCustomFieldFormSet,
+        widgets={'help_text': PreviewWidget},
     )
 
     class Meta:
@@ -595,24 +618,9 @@ class EditFormTypeForm(forms.ModelForm):
             initial_customfields = []
             list_val_lens = []
             for cf in initial_customfields_objs:
-                initial_customfields.append({
-                    'id': cf.id,
-                    'field_name': cf.field_name,
-                    'label': cf.label,
-                    'help_text': cf.help_text,
-                    'data_type': cf.data_type,
-                    'max_length': cf.max_length,
-                    'decimal_places': cf.decimal_places,
-                    'empty_selection_list': cf.empty_selection_list,
-                    'list_values': cf.list_values,
-                    'notifications': cf.notifications,
-                    'form_ordering': cf.form_ordering,
-                    'required': cf.required,
-                    'staff': cf.staff,
-                    'public': cf.public,
-                    'column': cf.column,
-                    'lookup': cf.lookup,
-                })
+                initial_cf = forms.model_to_dict(cf, exclude=['ticket_form', 'view_ordering'])
+                initial_customfields.append(initial_cf)
+
                 if cf.list_values: 
                     list_val_lens.append(len(cf.list_values))
                 else:

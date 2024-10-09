@@ -9,6 +9,7 @@ views/staff.py - The bulk of the application - provides most business logic and
 import re
 from copy import deepcopy
 import json
+from django.forms import model_to_dict
 import pandas as pd
 import dateutil
 import pytz
@@ -220,21 +221,7 @@ def create_queue(request):
         form = EditQueueForm("create", request.POST, organization=org.id)
 
         if form.is_valid():
-            queue = Queue(
-                organization = org,  # todo remove hard coding
-                title = form.cleaned_data['title'],
-                slug = form.cleaned_data['slug'], # no change
-                match_on = [i for i in form.cleaned_data['agg_match_on'] if i], # remove empty strings
-                match_on_addresses = [i for i in form.cleaned_data['agg_match_on_addresses'] if i], # remove empty strings
-                allow_public_submission = form.cleaned_data['allow_public_submission'],
-                escalate_days = form.cleaned_data['escalate_days'],
-                enable_notifications_on_email_events = form.cleaned_data['enable_notifications_on_email_events'],
-                default_owner = form.cleaned_data['default_owner'],
-                new_ticket_cc = form.cleaned_data['new_ticket_cc'],
-                updated_ticket_cc = form.cleaned_data['updated_ticket_cc'],
-                reassign_when_closed = form.cleaned_data['reassign_when_closed'],
-                dedicated_time = form.cleaned_data['dedicated_time'],
-            )
+            queue = Queue(**form.cleaned_data, organization=org)
             queue.save()
             return HttpResponseRedirect(reverse('helpdesk:maintain_queues'))
 
@@ -242,20 +229,7 @@ def create_queue(request):
             "create", 
             request.POST, 
             organization=org.id,
-            initial = {  # todo remove hard coding
-                'title': form.cleaned_data['title'],
-                'slug': form.data['slug'], # no change
-                'match_on': [i for i in form.cleaned_data['agg_match_on'] if i], # remove empty strings
-                'match_on_addresses': [i for i in form.cleaned_data['agg_match_on_addresses'] if i], # remove empty strings
-                'allow_public_submission': form.cleaned_data['allow_public_submission'],
-                'escalate_days': form.cleaned_data['escalate_days'],
-                'enable_notifications_on_email_events': form.cleaned_data['enable_notifications_on_email_events'],
-                'default_owner': form.cleaned_data['default_owner'],
-                'new_ticket_cc': form.cleaned_data['new_ticket_cc'],
-                'updated_ticket_cc': form.cleaned_data['updated_ticket_cc'],
-                'reassign_when_closed': form.cleaned_data['reassign_when_closed'],
-                'dedicated_time': form.cleaned_data['dedicated_time'],
-            }
+            initial = form.cleaned_data
         )
 
         return render(request, 'helpdesk/edit_queue.html', {
@@ -276,24 +250,7 @@ def edit_queue(request, slug):
         form = EditQueueForm(
             "edit",
             organization=org.id,
-            initial = {  # todo remove hard coding
-                'organization': queue.organization.id,
-                'title': queue.title,
-                'slug': queue.slug,
-                'match_on': queue.match_on,
-                'agg_match_on': queue.match_on,
-                'match_on_addresses': queue.match_on_addresses,
-                'agg_match_on_addresses': queue.match_on_addresses,
-                'allow_public_submission': queue.allow_public_submission,
-                'escalate_days': queue.escalate_days,
-                'enable_notifications_on_email_events': queue.enable_notifications_on_email_events,
-                'default_owner': queue.default_owner,
-                'reassign_when_closed': queue.reassign_when_closed,
-                'new_ticket_cc': queue.new_ticket_cc,
-                'updated_ticket_cc': queue.updated_ticket_cc,
-                'dedicated_time': queue.dedicated_time,
-                'importer': queue.importer if queue.importer else None,
-            }
+            initial = model_to_dict(queue)
         )
 
         return render(request, 'helpdesk/edit_queue.html', {
@@ -305,20 +262,8 @@ def edit_queue(request, slug):
     elif request.method == "POST":
         form = EditQueueForm("edit", request.POST, organization=org.id)
         if form.is_valid():
-            queue.title = form.cleaned_data['title']  # todo remove hard coding
-            # queue.slug = form.cleaned_data['slug'] # no change
-            queue.match_on = [i for i in form.cleaned_data['agg_match_on'] if i] # remove empty strings
-            queue.match_on_addresses = [i for i in form.cleaned_data['agg_match_on_addresses'] if i] # remove empty strings
-            queue.allow_public_submission = form.cleaned_data['allow_public_submission']
-            queue.escalate_days = form.cleaned_data['escalate_days']
-            queue.enable_notifications_on_email_events = form.cleaned_data['enable_notifications_on_email_events']
-            queue.default_owner = form.cleaned_data['default_owner']
-            queue.new_ticket_cc = form.cleaned_data['new_ticket_cc']
-            queue.updated_ticket_cc = form.cleaned_data['updated_ticket_cc']
-            queue.reassign_when_closed = form.cleaned_data['reassign_when_closed']
-            queue.dedicated_time = form.cleaned_data['dedicated_time']
-
-            queue.save()
+            del form.cleaned_data['slug'] # slug field disabled, use existing slug instead
+            Queue.objects.filter(pk=queue.pk).update(**form.cleaned_data, slug=queue.slug)
         return HttpResponseRedirect(reverse('helpdesk:maintain_queues'))
 
 
@@ -358,18 +303,9 @@ def create_form(request):
         formtype = FormType(organization = org, name="Unnamed Form")
         formtype.save()
         form = EditFormTypeForm(
-            initial = {
-                'id': formtype.id,  # todo remove hard coding
-                'name': formtype.name,
-                'description': formtype.description,
-                'queue': formtype.queue,
-                'public': formtype.public,
-                'staff': formtype.staff,
-                'unlisted': formtype.unlisted
-            },
             initial_customfields = CustomField.objects.filter(ticket_form=formtype),
             organization = org,
-            pk = formtype.id
+            instance = formtype
         )
 
         return render(request, 'helpdesk/edit_form.html', {
@@ -384,14 +320,7 @@ def create_form(request):
         formset = form.CustomFieldFormSet(request.POST)
 
         if form.is_valid():
-            formtype.name = form.cleaned_data['name']  # todo remove hard coding
-            formtype.description = form.cleaned_data['description']
-            formtype.queue = form.cleaned_data['queue']
-            formtype.updated = datetime.now()
-            formtype.public = form.cleaned_data['public']
-            formtype.staff = form.cleaned_data['staff']
-            formtype.unlisted = form.cleaned_data['unlisted']
-            formtype.save() 
+            FormType.objects.filter(pk=formtype.pk).update(**form.cleaned_data)
 
             if formset.is_valid():
                 for df in formset.deleted_forms:
@@ -399,28 +328,17 @@ def create_form(request):
 
                 for cf in formset.cleaned_data:
                     if not cf or cf['DELETE']: continue # continue to next item if form is empty or item is being deleted
+                    del cf['DELETE']
 
-                    customfield = cf['id'] if cf['id'] else CustomField()
+                    cf['ticket_form'] = formtype
 
-                    customfield.field_name = cf['field_name']  # todo remove hard coding
-                    customfield.label = cf['label']
-                    customfield.help_text = cf['help_text']
-                    customfield.data_type = cf['data_type']
-                    customfield.max_length = cf['max_length']
-                    customfield.decimal_places = cf['decimal_places']
-                    customfield.empty_selection_list = cf['empty_selection_list']
-                    customfield.list_values = cf['list_values']
-                    customfield.notifications = cf['notifications']
-                    customfield.form_ordering = cf['form_ordering']
-                    customfield.required = cf['required']
-                    customfield.staff = cf['staff']
-                    customfield.public = cf['public']
-                    customfield.column = cf['column']
-                    customfield.lookup = cf['lookup']
-                    if not customfield.created: customfield.created = datetime.now()
-                    customfield.modified = datetime.now()
-                    customfield.ticket_form = formtype
-                    customfield.save()
+                    if cf['id']:
+                        customfield = cf['id']
+                        del cf['id']
+                        CustomField.objects.filter(id=customfield.id).update(**cf)
+                    else:
+                        customfield = CustomField(**cf)
+                        customfield.save()
                 
                 return HttpResponseRedirect(reverse('helpdesk:maintain_forms'))
             
@@ -440,15 +358,7 @@ def edit_form(request, pk):
     
     if request.method == "GET":
         form = EditFormTypeForm(
-            initial = {
-                'id': formtype.id,  # todo remove hard coding
-                'name': formtype.name,
-                'description': formtype.description,
-                'queue': formtype.queue,
-                'public': formtype.public,
-                'staff': formtype.staff,
-                'unlisted': formtype.unlisted
-            },
+            initial = model_to_dict(formtype),
             initial_customfields = CustomField.objects.filter(ticket_form=formtype),
             organization = formtype.organization,
             pk = pk
@@ -465,14 +375,7 @@ def edit_form(request, pk):
         formset = form.CustomFieldFormSet(request.POST)
 
         if form.is_valid():
-            formtype.name = form.cleaned_data['name']  # todo remove hard coding
-            formtype.description = form.cleaned_data['description']
-            formtype.queue = form.cleaned_data['queue']
-            formtype.updated = datetime.now()
-            formtype.public = form.cleaned_data['public']
-            formtype.staff = form.cleaned_data['staff']
-            formtype.unlisted = form.cleaned_data['unlisted']
-            formtype.save() 
+            FormType.objects.filter(pk=formtype.pk).update(**form.cleaned_data)
             
             if formset.is_valid():
                 for df in formset.deleted_forms:
@@ -480,27 +383,17 @@ def edit_form(request, pk):
 
                 for cf in formset.cleaned_data:
                     if not cf or cf['DELETE']: continue # continue to next item if form is empty or item is being deleted
+                    del cf['DELETE']
 
-                    customfield = cf['id'] if cf['id'] else CustomField()  # todo remove hard coding
-                    customfield.field_name = cf['field_name']
-                    customfield.label = cf['label']
-                    customfield.help_text = cf['help_text']
-                    customfield.data_type = cf['data_type']
-                    customfield.max_length = cf['max_length']
-                    customfield.decimal_places = cf['decimal_places']
-                    customfield.empty_selection_list = cf['empty_selection_list']
-                    customfield.list_values = [i for i in cf['agg_list_values'] if i] # remove empty strings
-                    customfield.notifications = cf['notifications']
-                    customfield.form_ordering = cf['form_ordering']
-                    customfield.required = cf['required']
-                    customfield.staff = cf['staff']
-                    customfield.public = cf['public']
-                    customfield.column = cf['column']
-                    customfield.lookup = cf['lookup']
-                    if not customfield.created: customfield.created = datetime.now()
-                    customfield.modified = datetime.now()
-                    customfield.ticket_form = formtype
-                    customfield.save()
+                    cf['ticket_form'] = formtype
+
+                    if cf['id']:
+                        customfield = cf['id']
+                        del cf['id']
+                        CustomField.objects.filter(id=customfield.id).update(**cf)
+                    else:
+                        customfield = CustomField(**cf)
+                        customfield.save()
 
                 return HttpResponseRedirect(reverse('helpdesk:maintain_forms'))
 
@@ -524,42 +417,21 @@ def delete_form(request, pk):
 @helpdesk_staff_member_required
 def duplicate_form(request, pk):
     formtype = get_object_or_404(FormType, pk=pk)
-    new_form = FormType(  # todo remove hard coding
-        organization = formtype.organization,
-        name = formtype.name + " - Copy",
-        description = formtype.description,
-        queue = formtype.queue,
-        public = formtype.public,
-        staff = formtype.staff,
-        unlisted = formtype.unlisted,
-        created = datetime.now(),
-        updated = datetime.now(),
-    )
-    new_form.save() # generate default custom fields
+    original_custom_fields = CustomField.objects.filter(ticket_form=formtype)
     
-    for cf_name in formtype.get_extra_field_names():
-        cf = CustomField.objects.get(ticket_form=formtype, field_name=cf_name)
-        new_cf = CustomField(  # todo remove hard coding
-            field_name = cf.field_name,
-            label = cf.label,
-            help_text = cf.help_text,
-            data_type = cf.data_type,
-            max_length = cf.max_length,
-            decimal_places = cf.decimal_places,
-            empty_selection_list = cf.empty_selection_list,
-            list_values = cf.list_values,
-            notifications = cf.notifications,
-            form_ordering = cf.form_ordering,
-            required = cf.required,
-            staff = cf.staff,
-            public = cf.public,
-            column = cf.column,
-            lookup = cf.lookup,
-            created = datetime.now(),
-            modified = datetime.now(),
-            ticket_form = new_form
-        )
-        new_cf.save()
+    formtype.pk = None
+    formtype._state.adding = True
+    
+    formtype.save() # generate default custom fields
+    CustomField.objects.filter(ticket_form=formtype).delete() # delete default custom fields
+
+    # Copy fields into new form
+    for custom_field in original_custom_fields:
+        custom_field.pk = None
+        custom_field._state.adding = True
+        custom_field.ticket_form = formtype
+        custom_field.save()
+
     return HttpResponseRedirect(reverse('helpdesk:maintain_forms'))
 
 
@@ -582,25 +454,8 @@ def copy_field(request):
         else: # otherwise just use 1
             copy = base + '1'
 
-        customfield = CustomField()  # todo remove hard coding
-        customfield.field_name = copy
-        customfield.label = cf['label']
-        customfield.help_text = cf['help_text']
-        customfield.data_type = cf['data_type']
-        customfield.max_length = cf['max_length']
-        customfield.decimal_places = cf['decimal_places']
-        customfield.empty_selection_list = cf['empty_selection_list']
-        customfield.list_values = [i for i in cf['agg_list_values'] if i] # remove empty strings
-        customfield.notifications = cf['notifications']
-        customfield.form_ordering = cf['form_ordering']
-        customfield.required = cf['required']
-        customfield.staff = cf['staff']
-        customfield.public = cf['public']
-        customfield.column = cf['column']
-        customfield.lookup = cf['lookup']
-        if not customfield.created: customfield.created = datetime.now()
-        customfield.modified = datetime.now()
-        customfield.ticket_form = target_form
+        del cf['field_name'] # override field_name manually
+        customfield = CustomField(**cf, field_name=copy, ticket_form=target_form)
         customfield.save()
 
         return JsonResponse({'copied': True})
