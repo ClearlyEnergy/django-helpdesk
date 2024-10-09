@@ -23,39 +23,66 @@
 
 <div class="row">
     <div class="col-lg-12">
-        <div class="panel panel-primary">
-            <!-- /.panel-heading -->
-            <div class="panel-body">
-                <p><a href='add/'><button class="btn btn-success btn"><i class="fa fa-plus-circle"></i> {% trans "Add an Email" %}</button></a></p>
+        <div class="card">
+            <div class="card-header d-flex align-items-center">
+                <i class="fas fa-table mr-1"></i>
+                {% trans "Ignored Email Address List" %}
+                <div class="flex-fill d-flex justify-content-end">
+                    <a href='add/'>
+                        <button class="btn btn-primary btn-sm">
+                            <i class="fa fa-plus"></i> {% trans "Add an Email" %}
+                        </button>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-borderless mb-0">
                         <thead class="thead-light">
                             <tr>
-                                <th>{% trans "Name" %}</th>
-                                <th>{% trans "Email Address" %}</th>
-                                <th>{% trans "Date Added" %}</th>
-                                <th>{% trans "Date Modified" %}</th>
-                                <th>{% trans "Queues" %}</th>
-                                <th>{% trans "Keep in mailbox?" %}</th>
-                                <th>{% trans "Ignore Imports?" %}</th>
-                                <th>{% trans "Prevent Sending?" %}</th>
-                                <th>{% trans "Edit" %}</th>
-                                <th>{% trans "Remove" %}</th>
+                                <th class="text-center align-middle">{% trans "Name" %}</th>
+                                <th class="text-center align-middle">{% trans "Email Address" %}</th>
+                                <th class="text-center align-middle">{% trans "Date Added" %}</th>
+                                <th class="text-center align-middle">{% trans "Date Modified" %}</th>
+                                <th class="text-center align-middle">{% trans "Queues" %}</th>
+                                <th class="text-center align-middle">{% trans "Keep in Mailbox" %}</th>
+                                <th class="text-center align-middle">{% trans "Ignore Imports" %}</th>
+                                <th class="text-center align-middle">{% trans "Prevent Sending" %}</th>
+                                <th class="text-center align-middle">{% trans "Edit" %}</th>
+                                <th class="text-center align-middle">{% trans "Remove" %}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for ignore in ignore_list %}
                             <tr>
-                                <td>{{ ignore.name }}</td>
-                                <td>{{ ignore.email_address }}</td>
-                                <td>{{ ignore.date }}</td>
-                                <td>{{ ignore.modified }}</td>
-                                <td>{% for queue in ignore.queues.all %}{{ queue.slug }}{% if not forloop.last %}, {% endif %}{% empty %}{% trans "All" %}{% endfor %}</td>
-                                <td>{% if ignore.keep_in_mailbox %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                                <td>{% if ignore.ignore_import %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                                <td>{% if ignore.prevent_send %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                                <td><a href='{% url 'helpdesk:email_ignore_edit' ignore.id %}'><button class="btn btn-warning btn-sm">{% trans "Edit" %}</button></a></td>
-                                <td><a href='{% url 'helpdesk:email_ignore_del' ignore.id %}'><button class="btn btn-danger btn-sm">{% trans "Remove" %}</button></a></td>
+                                <td class="text-center align-middle">{{ ignore.name }}</td>
+                                <td class="text-center align-middle">{{ ignore.email_address }}</td>
+                                <td class="text-center align-middle">{{ ignore.date }}</td>
+                                <td class="text-center align-middle">{{ ignore.modified }}</td>
+                                <td class="text-center align-middle">{{ ignore.queues.all|join:", "}}</td>
+                                <td class="text-center align-middle">
+                                    {% if ignore.keep_in_mailbox %}
+                                    <i class="fa fa-check-circle text-success"></i>
+                                    {% else %}
+                                    <i class="fa fa-times-circle text-danger"></i>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center align-middle">
+                                    {% if ignore.ignore_import %}
+                                    <i class="fa fa-check-circle text-success"></i>
+                                    {% else %}
+                                    <i class="fa fa-times-circle text-danger"></i>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center align-middle">
+                                    {% if ignore.prevent_send %}
+                                    <i class="fa fa-check-circle text-success"></i>
+                                    {% else %}
+                                    <i class="fa fa-times-circle text-danger"></i>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center align-middle"><a href='{% url 'helpdesk:email_ignore_edit' ignore.id %}'><button class="btn btn-warning btn-sm"><i class="fa fa-pen"></i></button></a></td>
+                                <td class="text-center align-middle"><a href='{% url 'helpdesk:email_ignore_del' ignore.id %}'><button class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></button></a></td>
                             </tr>
                             {% endfor %}
                         </tbody>

@@ -19,11 +19,12 @@
     This will allow their emails to automatically create tickets in your system, and they will begin to receive notifications from this point on from tickets they are copied on.
     You can re-add this email address at any time.{% endblocktrans %}</p>
 
-<form method='post' action='./'>
-    <button class="btn btn-danger" type='submit'>{% trans "Remove from list" %}</button>
-{% csrf_token %}</form>
-<br/>
-<p><a href='../../'><button class="btn btn-primary btn">{% trans "Cancel" %}</button></a></p>
-
+<div class="d-flex">
+    <form method='post' action='./'>
+        <button class="btn btn-danger mr-2" type='submit'>{% trans "Remove Email Address" %}</button>
+    {% csrf_token %}</form>
+    <br/>
+    <a href='../../'><button class="btn btn-secondary">{% trans "Cancel" %}</button></a>
+</div>
 
 {% endblock %}

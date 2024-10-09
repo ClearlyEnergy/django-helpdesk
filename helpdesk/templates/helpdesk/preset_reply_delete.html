@@ -17,11 +17,12 @@
 
 <p>{% blocktrans %}Are you sure you wish to delete this preset reply?{% endblocktrans %}</p>
 
+<div class="d-flex">
 <form method='post' action='./'>
-    <button class="btn btn-danger" type='submit'>{% trans "Delete" %}</button>
+    <button class="btn btn-danger mr-2" type='submit'>{% trans "Delete Preset Reply" %}</button>
 {% csrf_token %}</form>
 <br/>
-<p><a href='../../'><button class="btn btn-primary btn">{% trans "Cancel" %}</button></a></p>
-
+<a href='../../'><button class="btn btn-secondary btn">{% trans "Cancel" %}</button></a>
+</div>
 
 {% endblock %}

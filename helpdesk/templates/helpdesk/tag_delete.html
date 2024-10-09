@@ -18,11 +18,12 @@
 <p>Are you sure you wish to delete this tag (<em>{{ tag.name }}</em>)?
     Deleting will remove it from all tickets.</p>
 
-<form method='post' action='./'>
-    <button class="btn btn-danger" type='submit'>{% trans "Delete" %}</button>
-{% csrf_token %}</form>
-<br/>
-<p><a href='../../'><button class="btn btn-primary btn">{% trans "Cancel" %}</button></a></p>
-
+<div class="d-flex">
+    <form method='post' action='./'>
+        <button class="btn btn-danger mr-2" type='submit'>{% trans "Delete Tag" %}</button>
+    {% csrf_token %}</form>
+    <br/>
+    <a href='../../'><button class="btn btn-secondary">{% trans "Cancel" %}</button></a>
+</div>
 
 {% endblock %}

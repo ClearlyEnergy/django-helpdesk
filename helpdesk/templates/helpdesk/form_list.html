@@ -30,23 +30,23 @@
             </a>
         </div>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
         {% comment %} <p class="my-1"> Select a form title to edit the form. </p> {% endcomment %}
         <div class="table-responsive">
-        <table class="table table-sm" id="dataTable" width="100%" cellspacing="0">
+        <table class="table table-sm table-borderless mb-0" id="dataTable" width="100%" cellspacing="0">
             <thead class="thead-light">
                 <tr>
                     {# Need to decide which columns are most relevant to the user #}
                     {% comment %} <th>{% trans "Organization" %}</th> {% endcomment %}
                     <th>{% trans "Name" %}</th>
                     {% comment %} <th>{% trans "Description" %}</th> {% endcomment %}
-                    <th style="width:10%">{% trans "Queue" %}</th>
-                    <th class="text-center" style="width:1%">{% trans "Public" %}</th>
-                    <th class="text-center" style="width:1%">{% trans "Staff" %}</th>
-                    <th class="text-center" style="width:1%">{% trans "Unlisted" %}</th>
+                    <th class="text-center align-middle" style="width: 20%;">{% trans "Queue" %}</th>
+                    <th class="text-center align-middle" style="width: 5%;">{% trans "Public" %}</th>
+                    <th class="text-center align-middle" style="width: 5%;">{% trans "Staff" %}</th>
+                    <th class="text-center align-middle" style="width: 5%;">{% trans "Unlisted" %}</th>
                     {% comment %} <th>{% trans "Additional Fields" %}</th> {% endcomment %}
-                    <th class="text-center" style="width:1%">{% trans "Duplicate" %}</th>
-                    <th class="text-center" style="width:1%">{% trans "Delete" %}</th>
+                    <th class="text-center align-middle" style="width: 5%;">{% trans "Duplicate" %}</th>
+                    <th class="text-center align-middle" style="width: 5%;">{% trans "Delete" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -55,8 +55,8 @@
                     {% comment %} <td>{{ form.organization.name }}</td> {% endcomment %}
                     <td class="tickettitle" data-toggle="tooltip" title="Edit {{ form.name }}"><a href="{% url 'helpdesk:edit_form' form.id %}{{ user_info.url }}">{{ form.id }}. {{ form.name }}</a></td>
                     {% comment %} <td>{{ form.get_markdown }}</td> {% endcomment %}
-                    <td>{{ form.queue }}</td>
-                    <td class="text-center">
+                    <td class="text-center align-middle">{{ form.queue }}</td>
+                    <td class="text-center align-middle">
                         {# This block could be another template, since it is reused 3 times in this code #}
                         {% if form.public %}
                         <i class="fa fa-check-circle text-success"></i>
@@ -64,14 +64,14 @@
                         <i class="fa fa-times-circle text-danger"></i>
                         {% endif%}
                     </td>
-                    <td class="text-center">
+                    <td class="text-center align-middle">
                         {% if form.staff %}
                         <i class="fa fa-check-circle text-success"></i>
                         {% else %}
                         <i class="fa fa-times-circle text-danger"></i>
                         {% endif%}
                     </td>
-                    <td class="text-center">
+                    <td class="text-center align-middle">
                         {% if form.unlisted %}
                         <i class="fa fa-check-circle text-success"></i>
                         {% else %}
@@ -79,12 +79,12 @@
                         {% endif%}
                     </td>
                     {% comment %} <td> {{ form.get_extra_field_names }} </td> {% endcomment %}
-                    <td class="text-center">
+                    <td class="text-center align-middle">
                         <a class="btn btn-primary btn-sm" href="{% url 'helpdesk:duplicate_form' form.id %}" title="Duplicate {{ form.name }}">
                             <i class="fa fa-clone"></i>
                         </a>
                     </td>
-                    <td class="text-center">
+                    <td class="text-center align-middle">
                         <a class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal" title="Delete {{ form.name }}" onclick="updateModal({{form.id}}, '{{form.name}}')">
                             <i class="fa fa-trash"></i>
                         </a>

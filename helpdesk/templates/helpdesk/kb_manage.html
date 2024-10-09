@@ -41,16 +41,18 @@
                 <h4 class="mb-0 flex-fill">
                     {{ category.title }}
                 </h4>
-                <a class="btn btn-success mr-2" href="{% url 'helpdesk:create_kb_article' category.slug %}">
+                <a class="btn btn-primary mr-2" href="{% url 'helpdesk:create_kb_article' category.slug %}">
                     <i class="fa fa-plus mr-1"></i>Create Article
                 </a>
-                <a class="btn btn-warning mr-1" href="{% url 'helpdesk:edit_kb_category' category.slug %}">
-                    <i class="fa fa-pen"></i>
-                </a>
-                <a class="btn btn-danger" onclick="confirmDelete('Category', '{{ category.title }}','{% url 'helpdesk:delete_kb_category' category.slug %}')">
-                    <i class="fa fa-trash"></i>
-                </a>
-                <button class="btn btn-outline-primary ml-2" id="toggle_{{ category.id }}" type="button" data-toggle="collapse" data-target="#articles_{{ category.id }}" aria-pressed="true">
+                <div class="btn-group">
+                    <a class="btn btn-warning" href="{% url 'helpdesk:edit_kb_category' category.slug %}">
+                        <i class="fa fa-pen"></i>
+                    </a>
+                    <a class="btn btn-danger" onclick="confirmDelete('Category', '{{ category.title }}','{% url 'helpdesk:delete_kb_category' category.slug %}')">
+                        <i class="fa fa-trash"></i>
+                    </a>
+                </div>
+                <button class="btn btn-outline-secondary ml-2" id="toggle_{{ category.id }}" type="button" data-toggle="collapse" data-target="#articles_{{ category.id }}" aria-pressed="true">
                     <i id="toggle_articles_{{ category.id }}" class="fas fa-minus"></i>
                 </button>
             </div>
