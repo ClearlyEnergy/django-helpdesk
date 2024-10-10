@@ -171,6 +171,9 @@
             form.querySelector('[id$=-empty_selection_list]').parentElement.parentElement.hidden = false;
             form.querySelector('[id$=-list_values]').parentElement.parentElement.hidden = false;
         }
+        if (dataType == 'checkbox_list') {
+            form.querySelector('[id$=-list_values]').parentElement.parentElement.hidden = false;
+        }
         if (dataType == 'email') {
             form.querySelector('[id$=-notifications]').parentElement.parentElement.hidden = false;
         }

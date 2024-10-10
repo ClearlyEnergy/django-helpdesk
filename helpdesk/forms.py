@@ -133,6 +133,11 @@ class CustomFieldMixin(object):
 
             instanceargs['key_field'] = forms.ChoiceField(choices=choices, widget=key_widget)
             instanceargs['value_field'] = forms.CharField(widget=value_widget)
+        elif field.data_type == 'checkbox_list':
+            fieldclass = forms.MultipleChoiceField
+            choices = field.choices_as_array
+            instanceargs['choices'] = choices
+            instanceargs['widget'] = forms.CheckboxSelectMultiple(attrs={'class': 'list-unstyled ml-2'})
         else:
             # Try to use the immediate equivalences dictionary
             try:
@@ -453,7 +458,6 @@ class KeyValueWidget(forms.widgets.MultiWidget):
                 formatted.append(v)
             return formatted
         return []
-
 
 class EditQueueForm(forms.ModelForm):
     error_css_class = 'text-danger'
