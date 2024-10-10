@@ -1724,30 +1724,13 @@ class SavedSearch(models.Model):
         help_text=_('User-provided name for this query'),
     )
 
-    shared = models.BooleanField(
-        _('Shared With Other Users?'),
-        blank=True,
-        default=False,
-        help_text=_('Should other users see this query?'),
-    )
-
     query = models.TextField(
         _('Search Query'),
         help_text=_('Pickled query object. Be wary changing this.'),
     )
 
-    opted_out_users = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        blank=True,
-        help_text=_('Users who have opted out of seeing this query'),
-        related_name='opted_out'
-    )
-
     def __str__(self):
-        if self.shared:
-            return '%s (*)' % self.title
-        else:
-            return '%s' % self.title
+        return '%s' % self.title
 
     class Meta:
         verbose_name = _('Saved search')

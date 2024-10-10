@@ -2074,10 +2074,10 @@ def load_saved_query(request, query_params=None):
     saved_query = None
 
     if request.GET.get('saved-query', None):
+        org = request.user.default_organization.helpdesk_organization
         try:
             saved_query = SavedSearch.objects.get(
-                Q(pk=request.GET.get('saved-query')) &
-                ((Q(shared=True) & ~Q(opted_out_users__in=[request.user])) | Q(user=request.user))
+                Q(pk=request.GET.get('saved-query')) & Q(user=request.user, organization=org)
             )
         except (SavedSearch.DoesNotExist, ValueError):
             raise QueryLoadError()
@@ -2498,13 +2498,7 @@ run_report = staff_member_required(run_report)
 @helpdesk_staff_member_required
 def save_query(request):
     title = request.POST.get('title', None)
-    shared = request.POST.get('shared', False)
     visible_cols = request.POST.get('visible', '').split(',')
-
-    if shared == 'on':  # django only translates '1', 'true', 't' into True
-        shared = True
-    else:
-        shared = False
     query_encoded = request.POST.get('query_encoded', None)
 
     if not title or not query_encoded:
@@ -2515,7 +2509,7 @@ def save_query(request):
     query_encoded = query_to_base64(query_unencoded)
 
     org = request.user.default_organization.helpdesk_organization
-    query = SavedSearch(title=title, shared=shared, query=query_encoded, user=request.user, organization=org)
+    query = SavedSearch(title=title, query=query_encoded, user=request.user, organization=org)
     query.save()
 
     return HttpResponseRedirect('%s?saved-query=%s' % (reverse('helpdesk:list'), query.id))
@@ -2526,7 +2520,8 @@ save_query = staff_member_required(save_query)
 
 @helpdesk_staff_member_required
 def delete_saved_query(request, id):
-    query = get_object_or_404(SavedSearch, id=id, user=request.user)
+    org = request.user.default_organization.helpdesk_organization
+    query = get_object_or_404(SavedSearch, id=id, user=request.user, organization=org)
 
     if request.method == 'POST':
         query.delete()
@@ -2534,46 +2529,6 @@ def delete_saved_query(request, id):
 
 
 delete_saved_query = staff_member_required(delete_saved_query)
-
-
-@helpdesk_staff_member_required
-def reject_saved_query(request, id):
-    user = request.user
-    query = get_object_or_404(SavedSearch, id=id)
-
-    query.opted_out_users.add(user)
-    return HttpResponseRedirect(reverse('helpdesk:list'))
-
-
-reject_saved_query = staff_member_required(reject_saved_query)
-
-
-@helpdesk_staff_member_required
-def reshare_saved_query(request, id):
-    user = request.user
-    query = get_object_or_404(SavedSearch, id=id, user=user)
-
-    query.opted_out_users.clear()
-    query.shared = True
-    query.save()
-    return HttpResponseRedirect(reverse('helpdesk:list') + '?saved-query=%s' % query.id)
-
-
-reshare_saved_query = staff_member_required(reshare_saved_query)
-
-
-@helpdesk_staff_member_required
-def unshare_saved_query(request, id):
-    user = request.user
-    query = get_object_or_404(SavedSearch, id=id, user=user)
-
-    query.shared = False
-    query.save()
-    return HttpResponseRedirect(reverse('helpdesk:list') + '?saved-query=%s' % query.id)
-
-
-unshare_saved_query = staff_member_required(unshare_saved_query)
-
 
 class EditUserSettingsView(MustBeStaffMixin, UpdateView):
     template_name = 'helpdesk/user_settings.html'
